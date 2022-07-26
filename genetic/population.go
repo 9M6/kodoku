@@ -1,17 +1,20 @@
 package genetic
 
-import "kodoku/kodoku"
-
 type Population struct {
-	candidates []kodoku.Grid
+	candidates []*Genes
 }
 
-// New creates a new population.
-func (p *Population) New(Nw int) *Population {
-	return p
-}
+// NewPopulation creates a new population.
+func NewPopulation(min, max, size int, base []uint8) *Population {
+	p := &Population{
+		candidates: make([]*Genes, size),
+	}
 
-// Seed a new population.
-func (p *Population) Seed(Nw int) *Population {
+	for i := 0; i < size; i++ {
+		g := NewGenes(base)
+		g.Seed(min, max)
+		p.candidates[i] = g
+	}
+
 	return p
 }

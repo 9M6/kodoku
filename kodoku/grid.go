@@ -3,6 +3,7 @@ package kodoku
 import (
 	"encoding/csv"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 )
@@ -30,6 +31,15 @@ func NewGrid(x, y int) *Grid {
 	}
 
 	return g
+}
+
+// String returns the string representation of the grid.
+func (g *Grid) String() string {
+	var sb strings.Builder
+	for _, r := range g.rows {
+		sb.WriteString(fmt.Sprintf("%v\n", r))
+	}
+	return sb.String()
 }
 
 // Clone returns a clone of the grid.
@@ -65,8 +75,8 @@ func (g *Grid) FillAndLock(row, col int, tile Tile) {
 }
 
 // TODO: Replace csvString with csvReader
-func (g *Grid) FillFromCSV(csvString string) {
-	r := csv.NewReader(strings.NewReader(csvString))
+func (g *Grid) FillFromCSV(csvReader io.Reader) {
+	r := csv.NewReader(csvReader)
 
 	record, err := r.ReadAll()
 	if err != nil {
@@ -99,17 +109,5 @@ func (g *Grid) IsLocked(row, col int) bool {
 }
 
 // TODO:
-func (g *Grid) UniqGrid() {}
-
-func (g *Grid) UniqRows() {}
-func (g *Grid) UniqCols() {}
-func (g *Grid) UniqSubs() {}
-
-// String returns the string representation of the grid.
-func (g *Grid) String() string {
-	var sb strings.Builder
-	for _, r := range g.rows {
-		sb.WriteString(fmt.Sprintf("%v\n", r))
-	}
-	return sb.String()
-}
+func (g *Grid) Import() {}
+func (g *Grid) Export() {}

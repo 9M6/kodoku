@@ -3,6 +3,7 @@ package kodoku
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -76,6 +77,7 @@ func TestGrid_Fill(t *testing.T) {
 
 func TestGrid_FillFromCSV(t *testing.T) {
 	g := NewGrid(4, 4)
-	g.FillFromCSV("1,1,1,1\n1,1,1,1\n1,1,1,1\n1,1,1,1")
+	csvString := strings.NewReader("1,1,1,1\n1,1,1,1\n1,1,1,1\n1,1,1,1")
+	g.FillFromCSV(csvString)
 	t.Log(g.String())
 }
