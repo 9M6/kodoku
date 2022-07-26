@@ -43,7 +43,7 @@ func TestGenes_Mutate(t *testing.T) {
 	g := NewGenes(ar)
 	g.Seed(1, 4)
 	t.Log(g.gene)
-	g.Mutate(0.5)
+	g.Mutate(1)
 	t.Log(g.gene)
 }
 

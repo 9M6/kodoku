@@ -180,8 +180,8 @@ func (g *Genes) Subs(size int) [][]uint8 {
 
 // SubScore returns the score of the fitness of the sub.
 // TODO: implement
-func (g *Genes) SubScore() float64 {
-	return 0
+func (g *Genes) SubScore() (int, float64) {
+	return 0, 0.0
 }
 
 // Score returns the score of the fitness of the genes, it does so by
@@ -195,21 +195,29 @@ func (g *Genes) SubScore() float64 {
 func (g *Genes) Score() float64 {
 	_, rowScore := g.RowScore()
 	_, colScore := g.ColScore()
-	return rowScore + colScore
+	_, subScore := g.SubScore()
+	return rowScore + colScore + subScore
 }
 
 // Mutate mutates the genes, it does so by filling the genes with a random
 // value from min, max range, the function also has a probability variable,
-// 'u' given that the function will actually mutate the genes.
+// 'u' given that the function will actually mutate/swap the genes.
 func (g *Genes) Mutate(u float32) {
 	gene := g.Export()
 
 	for i := 0; i < len(gene); i++ {
 		if rand.Float32() < u {
+		RAND:
 			rnd := g.Rand(0, len(gene)-1)
-			if gene[i] != EMPTY && gene[rnd] != EMPTY {
-				gene[i], gene[rnd] = gene[rnd], gene[i]
+			if gene[rnd] == EMPTY {
+				goto RAND
 			}
+
+			if gene[i] == EMPTY {
+				continue
+			}
+
+			gene[i], gene[rnd] = gene[rnd], gene[i]
 		}
 	}
 
