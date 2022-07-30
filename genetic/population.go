@@ -18,3 +18,7 @@ func NewPopulation(min, max, size int, base []uint8) *Population {
 
 	return p
 }
+
+func (p *Population) Solve() {
+
+}

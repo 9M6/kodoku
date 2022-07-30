@@ -30,6 +30,10 @@ type Genes struct {
 	// Gene structure
 	gene []uint8
 	lock map[int]bool
+
+	// Fitness structure
+	dirty   bool
+	fitness float64
 }
 
 // NewGenes creates a new genes, and prefills the gene array with the
@@ -101,7 +105,7 @@ func (g *Genes) Rows(size int) [][]uint8 {
 // RowScore returns the score of the fitness of the row, it does so by
 // counting the number of duplicates in each row, and then it returns
 // the number of duplicates and the percentage of duplicates.
-func (g *Genes) RowScore() (int, float64) {
+func (g *Genes) RowScore() (int, int) {
 	score := make(map[int]map[uint8]int, 0)
 
 	rows := g.Rows(4)
@@ -112,16 +116,16 @@ func (g *Genes) RowScore() (int, float64) {
 		}
 	}
 
-	var duplicates int
+	var duple int
 	for i := 0; i < len(score); i++ {
 		for _, s := range score[i] {
 			if s > 1 {
-				duplicates++
+				duple += s
 			}
 		}
 	}
 
-	return duplicates, float64(duplicates) / float64(len(rows)*len(rows[0]))
+	return duple, len(rows) * len(rows[0])
 }
 
 // Cols returns the genes as a matrix which has been transposed given a matrix.
@@ -149,7 +153,7 @@ func (g *Genes) Cols(size int) [][]uint8 {
 // ColScore returns the score of the fitness of the column, it does so by
 // counting the number of duplicates in each column, and then it returns
 // the number of duplicates and the percentage of duplicates.
-func (g *Genes) ColScore() (int, float64) {
+func (g *Genes) ColScore() (int, int) {
 	score := make(map[int]map[uint8]int, 0)
 
 	cols := g.Rows(4)
@@ -160,31 +164,63 @@ func (g *Genes) ColScore() (int, float64) {
 		}
 	}
 
-	var duplicates int
+	var duple int
 	for i := 0; i < len(score); i++ {
 		for _, s := range score[i] {
 			if s > 1 {
-				duplicates++
+				duple += s
 			}
 		}
 	}
 
-	return duplicates, float64(duplicates) / float64(len(cols)*len(cols[0]))
+	return duple, len(cols) * len(cols[0])
 }
 
 // Subs returns the genes as a matrix.
-// TODO: implement
 func (g *Genes) Subs(size int) [][]uint8 {
-	return nil
+	rows := g.Rows(2)
+	subs := make([][]uint8, size)
+	step := size / 2
+
+	for i := 0; i < size; i++ {
+		subs[i] = make([]uint8, 0)
+		for j := 0; j < step; j++ {
+			if i < step {
+				subs[i] = append(subs[i], rows[i+step*j]...)
+			} else {
+				subs[i] = append(subs[i], rows[step+i+step*j]...)
+			}
+		}
+	}
+
+	return subs
 }
 
 // SubScore returns the score of the fitness of the sub.
-// TODO: implement
-func (g *Genes) SubScore() (int, float64) {
-	return 0, 0.0
+func (g *Genes) SubScore() (int, int) {
+	score := make(map[int]map[uint8]int, 0)
+
+	subs := g.Subs(4)
+	for i := 0; i < len(subs); i++ {
+		score[i] = make(map[uint8]int, 0)
+		for j := 0; j < len(subs[i]); j++ {
+			score[i][subs[i][j]]++
+		}
+	}
+
+	var duple int
+	for i := 0; i < len(score); i++ {
+		for _, s := range score[i] {
+			if s > 1 {
+				duple += s
+			}
+		}
+	}
+
+	return duple, len(subs) * len(subs[0])
 }
 
-// Score returns the score of the fitness of the genes, it does so by
+// Fitness returns the score of the fitness of the genes, it does so by
 // calculating both row and column, and subgrid scores, and then it
 // returns the sum of all scores.
 //
@@ -192,11 +228,16 @@ func (g *Genes) SubScore() (int, float64) {
 // and subgrid, and then it returns the sum of all scores, but to calculate
 // the fitness, we have to subtract it, since that will give us the % of
 // non duplicates words, and thus how close we are to having all unique words.
-func (g *Genes) Score() float64 {
-	_, rowScore := g.RowScore()
-	_, colScore := g.ColScore()
-	_, subScore := g.SubScore()
-	return rowScore + colScore + subScore
+func (g *Genes) Fitness() float64 {
+	if g.fitness != 0.0 && !g.dirty {
+		return g.fitness
+	}
+
+	rd, rs := g.RowScore()
+	cd, cs := g.ColScore()
+	sd, ss := g.SubScore()
+
+	return 1 - (float64(rd+cd+sd) / float64(rs+cs+ss))
 }
 
 // Mutate mutates the genes, it does so by filling the genes with a random
@@ -227,6 +268,7 @@ func (g *Genes) Mutate(u float32) {
 // Import imports the genes from a slice, it does so by filling the genes with
 // the values from the slice, by not overwriting the locked genes.
 func (g *Genes) Import(gene []uint8) {
+	g.dirty = true
 	for i := 0; i < len(gene); i++ {
 		if gene[i] != EMPTY {
 			g.Fill(i, gene[i])

@@ -77,13 +77,30 @@ func TestGenes_ColScore(t *testing.T) {
 	t.Log(g.ColScore())
 }
 
-func TestGenes_Score(t *testing.T) {
+func TestGenes_Fitness(t *testing.T) {
 	ar := []uint8{1, EMPTY, 3, 4, EMPTY, 2, 3, EMPTY, 1, 4, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}
 	g := NewGenes(ar)
 	g.Seed(1, 4)
 	t.Log(g.gene)
-	t.Log(1 - g.Score())
+	t.Log(1 - g.Fitness())
 
+}
+
+func TestGenes_Subs(t *testing.T) {
+	ar := []uint8{1, EMPTY, 3, 4, EMPTY, 2, 3, EMPTY, 1, 4, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}
+	g := NewGenes(ar)
+	g.Seed(1, 4)
+	t.Log(g.gene)
+	t.Log(g.Rows(4))
+	t.Log(g.Subs(4))
+}
+
+func TestGenes_SubScore(t *testing.T) {
+	ar := []uint8{1, EMPTY, 3, 4, EMPTY, 2, 3, EMPTY, 1, 4, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}
+	g := NewGenes(ar)
+	g.Seed(1, 4)
+	t.Log(g.gene)
+	t.Log(g.SubScore())
 }
 
 func TestGenes_Import(t *testing.T) {
