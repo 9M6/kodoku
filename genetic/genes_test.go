@@ -96,7 +96,7 @@ func TestGenes_Subs(t *testing.T) {
 }
 
 func TestGenes_SubScore(t *testing.T) {
-	ar := []uint8{1, EMPTY, 3, 4, EMPTY, 2, 3, EMPTY, 1, 4, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY}
+	ar := []uint8{3, 4, 2, 1, 1, 2, 3, 4, 2, 1, 3, 4, 3, 4, 2, 1}
 	g := NewGenes(ar)
 	g.Seed(1, 4)
 	t.Log(g.gene)
@@ -118,4 +118,19 @@ func TestGenes_Export(t *testing.T) {
 	g.Seed(1, 4)
 	t.Log(g.gene)
 	t.Log(g.Export())
+}
+
+func TestGenes_CrossOver(t *testing.T) {
+	ch := []uint8{1, EMPTY, 3, EMPTY, 1, 4, 3, EMPTY, 1, EMPTY, EMPTY, EMPTY, EMPTY, 3, 1, EMPTY}
+	g := NewGenes(ch)
+	p1 := []uint8{1, EMPTY, 3, EMPTY, 1, 4, 3, EMPTY, 1, EMPTY, EMPTY, EMPTY, EMPTY, 3, 1, EMPTY}
+	p2 := []uint8{3, EMPTY, 1, EMPTY, EMPTY, EMPTY, 1, EMPTY, 3, EMPTY, 1, 4, EMPTY, 3, 1, EMPTY}
+	g1 := NewGenes(p1)
+	g1.Seed(1, 4)
+	g2 := NewGenes(p2)
+	g2.Seed(1, 4)
+	t.Log(g1.gene)
+	t.Log(g2.gene)
+	g.CrossOver(0.5, g1, g2)
+	t.Log(g.gene)
 }

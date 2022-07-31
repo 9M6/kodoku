@@ -28,6 +28,7 @@ const (
 // the user has initially provided.
 type Genes struct {
 	// Gene structure
+	base []uint8
 	gene []uint8
 	lock map[int]bool
 
@@ -40,6 +41,7 @@ type Genes struct {
 // base solution provided by the user.
 func NewGenes(base []uint8) *Genes {
 	var g = &Genes{
+		base: base[:],
 		gene: make([]uint8, len(base)),
 		lock: make(map[int]bool),
 	}
@@ -49,6 +51,13 @@ func NewGenes(base []uint8) *Genes {
 	}
 
 	return g
+}
+
+// NewChild creates a new child from the current gene and the given parent.
+func NewChild(u float64, x, y *Genes) *Genes {
+	child := NewGenes(make([]uint8, len(x.Base())))
+	child.CrossOver(u, x, y)
+	return child
 }
 
 // Seed function fills the genes with a random values from min, max range.
@@ -65,7 +74,7 @@ func (g *Genes) Rand(min, max int) uint8 {
 
 // Fill fills the gene at the given index with the given value.
 func (g *Genes) Fill(i int, v uint8) {
-	if !g.IsLocked(i) || v == EMPTY {
+	if !g.IsLocked(i) {
 		g.gene[i] = v
 	}
 }
@@ -243,11 +252,11 @@ func (g *Genes) Fitness() float64 {
 // Mutate mutates the genes, it does so by filling the genes with a random
 // value from min, max range, the function also has a probability variable,
 // 'u' given that the function will actually mutate/swap the genes.
-func (g *Genes) Mutate(u float32) {
+func (g *Genes) Mutate(u float64) {
 	gene := g.Export()
 
 	for i := 0; i < len(gene); i++ {
-		if rand.Float32() < u {
+		if rand.Float64() < u {
 		RAND:
 			rnd := g.Rand(0, len(gene)-1)
 			if gene[rnd] == EMPTY {
@@ -263,6 +272,28 @@ func (g *Genes) Mutate(u float32) {
 	}
 
 	g.Import(gene)
+}
+
+// CrossOver mixes two parent set of genes, depending on an u-probability.
+func (g *Genes) CrossOver(u float64, x, y *Genes) {
+	eX, eY := x.Export(), y.Export()
+
+	for i := 0; i < len(g.gene); i++ {
+		if g.IsLocked(i) {
+			continue
+		}
+
+		if rand.Float64() < u {
+			g.Fill(i, eX[i])
+		} else {
+			g.Fill(i, eY[i])
+		}
+	}
+}
+
+// Base returns the base of the genes.
+func (g *Genes) Base() []uint8 {
+	return g.base
 }
 
 // Import imports the genes from a slice, it does so by filling the genes with

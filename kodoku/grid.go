@@ -1,33 +1,28 @@
 package kodoku
 
 import (
-	"encoding/csv"
 	"fmt"
-	"io"
-	"strconv"
 	"strings"
+
+	"kodoku/genetic"
 )
 
 // Grid is a grid of tiles.
 type Grid struct {
-	rows []Row
+	rows [][]uint8
 	lock map[int]map[int]bool
+	code map[uint8]string
 }
 
 // NewGrid returns a new grid.
 func NewGrid(x, y int) *Grid {
-	r := make(Row, x)
-	for i := 0; i < x; i++ {
-		r[i] = Tile(T1)
+	g := &Grid{
+		rows: make([][]uint8, x),
+		code: make(map[uint8]string),
 	}
 
-	g := &Grid{
-		rows: make([]Row, x),
-		lock: make(map[int]map[int]bool, y),
-	}
-	for i := 0; i < y; i++ {
-		g.rows[i] = r
-		g.lock[i] = make(map[int]bool, x)
+	for i := 0; i < x; i++ {
+		g.rows[i] = make([]uint8, y)
 	}
 
 	return g
@@ -35,79 +30,85 @@ func NewGrid(x, y int) *Grid {
 
 // String returns the string representation of the grid.
 func (g *Grid) String() string {
-	var sb strings.Builder
+	var rb strings.Builder
 	for _, r := range g.rows {
-		sb.WriteString(fmt.Sprintf("%v\n", r))
-	}
-	return sb.String()
-}
-
-// Clone returns a clone of the grid.
-// TODO:
-func (g *Grid) Clone() *Grid {
-	clone := NewGrid(len(g.rows), len(g.rows[0]))
-
-	copy(clone.rows, g.rows)
-	for i, row := range g.lock {
-		clone.lock[i] = make(map[int]bool, len(row))
-		for j, locked := range row {
-			clone.lock[i][j] = locked
+		var cb strings.Builder
+		for _, v := range r {
+			cb.WriteString(fmt.Sprintf(" %s ", g.Decode(v)))
 		}
+		rb.WriteString(fmt.Sprintf("\n%v", cb.String()))
 	}
-
-	return clone
+	return rb.String()
 }
 
 // Fill fills the grid with the given tile.
-func (g *Grid) Fill(row, col int, tile Tile) {
+func (g *Grid) Fill(row, col int, v uint8) {
 	if len(g.rows) > row && len(g.rows[row]) > col {
 		locked, ok := g.lock[row][col]
 		if !ok || !locked {
-			g.rows[row][col] = tile
+			g.rows[row][col] = v
 		}
 	}
 }
 
-// FillAndLock the grid with the given tile, and locks the variable.
-func (g *Grid) FillAndLock(row, col int, tile Tile) {
-	g.Fill(row, col, tile)
-	g.Lock(row, col, true)
-}
-
-// TODO: Replace csvString with csvReader
-func (g *Grid) FillFromCSV(csvReader io.Reader) {
-	r := csv.NewReader(csvReader)
-
-	record, err := r.ReadAll()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	for i, row := range record {
+func (g *Grid) FillFromCSV(csv [][]string) {
+	for i, row := range csv {
 		for j, col := range row {
-			tile, err := strconv.Atoi(col)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-
-			g.FillAndLock(i, j, Tile(tile))
+			g.Fill(i, j, g.Encode(col))
 		}
 	}
 }
 
-// Lock locks the grid at the given row and column.
-func (g *Grid) Lock(row, col int, locked bool) {
-	g.lock[row][col] = locked
+func (g *Grid) Encode(v string) uint8 {
+	if v == "-" || v == "" {
+		return 0
+	}
+
+	var max uint8
+	for i := range g.code {
+		if g.code[i] == v {
+			return i
+		}
+
+		if i > max {
+			max = i
+		}
+	}
+
+	max = max + 1
+	g.code[max] = v
+
+	return max
 }
 
-// IsLocked returns whether the grid at the given row and column is locked.
-func (g *Grid) IsLocked(row, col int) bool {
-	locked, ok := g.lock[row][col]
-	return ok || locked
+func (g *Grid) Decode(v uint8) string {
+	if v == genetic.EMPTY {
+		return "-"
+	}
+	return g.code[v]
 }
 
-// TODO:
-func (g *Grid) Import() {}
-func (g *Grid) Export() {}
+func (g *Grid) Import(p []uint8) {
+	x := len(g.rows)
+	y := len(g.rows[0])
+	r := make([]uint8, x)
+
+	for i := 0; i < x; i++ {
+		r, p = p[:y], p[y:]
+		for j := 0; j < y; j++ {
+			if r[j] != genetic.EMPTY {
+				g.Fill(i, j, r[j])
+			}
+		}
+	}
+}
+
+func (g *Grid) Export() []uint8 {
+	p := make([]uint8, len(g.rows)*len(g.rows[0]))
+	for i := 0; i < len(g.rows); i++ {
+		for j := 0; j < len(g.rows[i]); j++ {
+			p[i*len(g.rows[i])+j] = g.rows[i][j]
+		}
+	}
+	return p
+}
