@@ -49,7 +49,7 @@ func (g *Generations) Solve() *Genes {
 				return KTournamentSelection(s, g.iter)
 			})
 
-			fmt.Printf("\033[2K\r\r%v generations", g.gen)
+			fmt.Printf("\033[2K\r\r%v generations ", g.gen)
 
 			g.species.Push(parent)
 			g.species.Push(childs)

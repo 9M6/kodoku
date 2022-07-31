@@ -75,9 +75,12 @@ func main() {
 	fmt.Println("Searching for a solution: ")
 	solution := g.Solve()
 	if solution != nil {
-		fmt.Println(solution)
-		fmt.Println(solution.Export())
 		grid.Import(solution.Export())
+		if solution.Fitness() < 1 {
+			fmt.Println(fmt.Sprintf("This is an incomplete solution given \n population: %v, selection iteration %v, %v crossrate mutation and %v mutation rate", *genSize, *iterSize, *crossRate, *mutRate))
+			fmt.Println("\nThe system returned a solution with a fitness of:", solution.Fitness())
+			fmt.Println("\nTo find a better solution try playing with the parameters:")
+		}
 		fmt.Println("\nThe solution is:", grid)
 	} else {
 		fmt.Println("No solution found")
